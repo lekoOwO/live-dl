@@ -1017,7 +1017,8 @@ function func_finalize_vars() {
   OUTPUT_BASE="$BASE_DIR/$FILENAME_BASE"
 
   # Full output dir
-  OUTPUT_PATH="$OUTPUT_BASE/$FILENAME"
+  UID8=$(cat /proc/sys/kernel/random/uuid | head -c 8)
+  OUTPUT_PATH="$OUTPUT_BASE/$FILENAME.$UID8"
 
   # Write prettified JSON metadata to file
   func_prepare_dir "$OUTPUT_BASE"
