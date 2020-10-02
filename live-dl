@@ -1005,20 +1005,39 @@ function func_prepare_dir() {
   [ -d "$_dir" ] || mkdir -p "$_dir"
 }
 
+function func_create_file_name() {
+  # Output $file_base_name.X if $file_base_name$EXTENSION exists.
+  # prevents the 6hr overwrite issue.
+  
+  local file_base_name="${1:-$FILENAME}"
+  local output_dir="${2:-$OUTPUT_BASE}"
+
+  if [ -f "$output_dir/${file_base_name}${EXTENSION}" ]; then
+    local -i NUM_POSTFIX=1
+    while [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}${EXTENSION}" ]; do
+      let NUM_POSTFIX+=1
+    done
+    echo "${file_base_name}.${NUM_POSTFIX}"
+  else
+    echo $file_base_name
+  fi
+}
+
 function func_finalize_vars() {
   # Output preffix dir (without user base dir)
   # Also I replace slash with underscores here to avoid nesting directories
   # i.e.
   # 天宮 こころ / Kokoro Amamiya 【にじさんじ所属】 will become:
   # 天宮 こころ／Kokoro Amamiya 【にじさんじ所属】
+  EXTENSION=".ts"
   FILENAME_BASE=$(echo "$UPLOADER" | sed "s/\//／/" | sed "s/ ／ /／/")
 
   # Output base without filename
   OUTPUT_BASE="$BASE_DIR/$FILENAME_BASE"
 
   # Full output dir
-  UID8=$(cat /proc/sys/kernel/random/uuid | head -c 8)
-  OUTPUT_PATH="$OUTPUT_BASE/$FILENAME.$UID8"
+  FILENAME=$(func_create_file_name $FILENAME $OUTPUT_BASE)
+  OUTPUT_PATH="$OUTPUT_BASE/$FILENAME"
 
   # Write prettified JSON metadata to file
   func_prepare_dir "$OUTPUT_BASE"
@@ -1101,7 +1120,7 @@ function func_download_youtube() {
       --hls-timeout 90 \
       --ringbuffer-size 256M \
       --loglevel trace \
-      -o "$OUTPUT_PATH.ts" \
+      -o "${OUTPUT_PATH}${EXTENSION}" \
       "${WEBPAGE_URL}" best >> "$OUTPUT_PATH.log" 2>&1
   elif [ "$CONTENT_STATE" == "video" ]; then
     if [ "$DL_TYPE" == "playlist" ]; then
@@ -1156,12 +1175,12 @@ function func_finalize_download() {
   if [ "$CONTENT_STATE" == "live" ]; then
     # Convert from TS to MP4 (will override existing with -y option)
     __info "Converting to MP4"
-    ffmpeg -i "$OUTPUT_PATH.ts" -y \
+    ffmpeg -i "${OUTPUT_PATH}${EXTENSION}" -y \
       -codec copy \
       "$OUTPUT_PATH.mp4" >> "$OUTPUT_PATH.log" 2>&1
 
     # Remove original TS file
-    rm -f "$OUTPUT_PATH.ts"
+    rm -f "${OUTPUT_PATH}${EXTENSION}"
   fi
 
   if [ ! "$SKIP_METADATA" ]; then
