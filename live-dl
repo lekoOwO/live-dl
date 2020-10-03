@@ -159,6 +159,12 @@ while [ $# -gt 0 ]; do
       PARAM_SKIP_TELEGRAM=true
       shift
       ;;
+    --callback)
+      PARAM_CALLBACK=true
+      PARAM_CALLBACK_EXEC="$2"
+      shift
+      shift
+      ;;
     -1|--once)
       PARAM_ONE_TIME=true
       shift
@@ -1008,11 +1014,15 @@ function func_prepare_dir() {
 function func_create_file_name() {
   # Output $file_base_name.X if $file_base_name$EXTENSION exists.
   # prevents the 6hr overwrite issue.
-  
+
   local file_base_name="${1:-$FILENAME}"
   local output_dir="${2:-$OUTPUT_BASE}"
 
-  if [ -f "$output_dir/${file_base_name}${EXTENSION}" ]; then
+  if [ -f "$output_dir/${file_base_name}${EXTENSION}" ] || \
+     [ -f "$output_dir/${file_base_name}.mp4" ] || \
+     [ -f "$output_dir/${file_base_name}.log" ] || \
+     [ -f "$output_dir/${file_base_name}.jpg" ]
+  then
     local -i NUM_POSTFIX=1
     while [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}${EXTENSION}" ]; do
       let NUM_POSTFIX+=1
@@ -1036,7 +1046,7 @@ function func_finalize_vars() {
   OUTPUT_BASE="$BASE_DIR/$FILENAME_BASE"
 
   # Full output dir
-  FILENAME=$(func_create_file_name $FILENAME $OUTPUT_BASE)
+  FILENAME=$(func_create_file_name "$FILENAME" "$OUTPUT_BASE")
   OUTPUT_PATH="$OUTPUT_BASE/$FILENAME"
 
   # Write prettified JSON metadata to file
@@ -1259,6 +1269,18 @@ Path:      $HOSTNAME:$OUTPUT_PATH.mp4
   sleep 10
 }
 
+function func_callback() {
+  if [ $CALLBACK == "true" ]; then
+    if [ $CALLBACK_EXEC != "/dev/null" ]; then 
+      __info "Calling callback function..."
+      local cmd=( "$CALLBACK_EXEC" "${OUTPUT_PATH}.mp4" "$BASE_DIR/" "$VIDEO_ID" "$FULLTITLE" "$UPLOADER" "$UPLOAD_DATE" )
+      "${cmd[@]}" >> "$OUTPUT_PATH.log" 2>&1
+    else
+      __info "$(__yellow "No callback executable specified.")"
+    fi
+  fi
+}
+
 #
 # Executes
 #
@@ -1299,6 +1321,7 @@ Options:
   --skip-email                Skip sending email notification
   --skip-slack                Skip sending Slack notification
   --skip-telegram             Skip sending Telegram notification
+  --callback                  Run the callback after videos downloaded
   --once, -1                  Run only once, default: false
   --debug                     Show debug logs, default: false"
   exit 1
@@ -1330,6 +1353,7 @@ CONFIG_SKIP_METADATA=`echo $CONFIG_RAW | jq -r '.config.skip_metadata | select(.
 CONFIG_SKIP_EMAIL=`echo $CONFIG_RAW | jq -r '.config.skip_email | select(.!=null)'`
 CONFIG_SKIP_SLACK=`echo $CONFIG_RAW | jq -r '.config.skip_slack | select(.!=null)'`
 CONFIG_SKIP_TELEGRAM=`echo $CONFIG_RAW | jq -r '.config.skip_telegram | select(.!=null)'`
+CONFIG_CALLBACK=`echo $CONFIG_RAW | jq -r '.config.run_callback | select(.!=null)'`
 CONFIG_ONE_TIME=`echo $CONFIG_RAW | jq -r '.config.one_time | select(.!=null)'`
 CONFIG_EMAIL_PROVIDER=`echo $CONFIG_RAW | jq -r '.config.email_provider | select(.!=null)'`
 CONFIG_MAILGUN_API=`echo $CONFIG_RAW | jq -r '.config.mailgun.api | select(.!=null)'`
@@ -1342,6 +1366,7 @@ CONFIG_SES_RECEIPT=`echo $CONFIG_RAW | jq -r '.config.ses.receipt | select(.!=nu
 CONFIG_SLACK_WEBHOOK=`echo $CONFIG_RAW | jq -r '.config.slack.webhook | select(.!=null)'`
 CONFIG_TELEGRAM_BOT=`echo $CONFIG_RAW | jq -r '.config.telegram.bot | select(.!=null)'`
 CONFIG_TELEGRAM_CHANNEL=`echo $CONFIG_RAW | jq -r '.config.telegram.channel | select(.!=null)'`
+CONFIG_CALLBACK_EXEC=`echo $CONFIG_RAW | jq -r '.config.callback.executable | select(.!=null)'`
 
 MODE="${PARAM_MODE:-$CONFIG_MODE}"
 BASE_DIR="${_PARAM_BASE_DIR:-$CONFIG_BASE_DIR}"
@@ -1352,6 +1377,8 @@ SKIP_METADATA="${PARAM_SKIP_METADATA:-$CONFIG_SKIP_METADATA}"
 SKIP_EMAIL="${PARAM_SKIP_EMAIL:-$CONFIG_SKIP_EMAIL}"
 SKIP_SLACK="${PARAM_SKIP_SLACK:-$CONFIG_SKIP_SLACK}"
 SKIP_TELEGRAM="${PARAM_SKIP_TELEGRAM:-$CONFIG_SKIP_TELEGRAM}"
+CALLBACK="${PARAM_CALLBACK:-$CONFIG_CALLBACK}"
+CALLBACK_EXEC="${PARAM_CALLBACK_EXEC:-$CONFIG_CALLBACK_EXEC}"
 ONE_TIME="${PARAM_ONE_TIME:-$CONFIG_ONE_TIME}"
 URL_INPUT="$1"
 
@@ -1366,6 +1393,7 @@ __info "Skip embedding metadata        : ${SKIP_METADATA}"
 __info "Skip email notification        : ${SKIP_EMAIL}"
 __info "Skip Slack notification        : ${SKIP_SLACK}"
 __info "Skip Telegram notification     : ${SKIP_TELEGRAM}"
+__info "Callback                       : ${CALLBACK}"
 __info "Email provider                 : ${CONFIG_EMAIL_PROVIDER}"
 __info "One-time execution             : ${ONE_TIME}"
 
@@ -1427,6 +1455,7 @@ while true; do
         func_download_youtube
         func_finalize_download
         func_send_email "⚫️ [YouTube] $UPLOADER - $FULLTITLE" "$FILE_SUMMARY_TRIM"
+        func_callback
 
       #
       # Mode: metadata only
@@ -1473,6 +1502,7 @@ while true; do
       if [ "$MODE" == "download" ]; then
         func_download_youtube
         func_finalize_download
+        func_callback
         exit 0
       else
         __info "Metadata only mode, no video will be downloaded."

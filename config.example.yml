@@ -21,6 +21,7 @@ config:
   skip_email: false
   skip_slack: false
   skip_telegram: false
+  run_callback: false
   one_time: false
   timezone: Asia/Tokyo
   email_provider: ses
@@ -43,6 +44,9 @@ config:
     # Get channel ID via:
     # https://api.telegram.org/bot<API-access-token>/getUpdates?offset=0
     channel: 0000000000000
+  callback:
+    # `EXECUTABLE "${OUTPUT_PATH}.mp4" "$BASE_DIR/" $VIDEO_ID $FULLTITLE $UPLOADER $UPLOAD_DATE` will be called.
+    executable: /dev/null
 
 map:
   - name: Sparanoid
