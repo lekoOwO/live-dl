@@ -165,6 +165,12 @@ while [ $# -gt 0 ]; do
       shift
       shift
       ;;
+    --address-pool)
+      PARAM_ADDRESS_POOL=true
+      PARAM_ADDRESS_POOL_FILE="$2"
+      shift
+      shift
+      ;;
     -1|--once)
       PARAM_ONE_TIME=true
       shift
@@ -405,6 +411,15 @@ function func_create_url() {
   fi
 }
 
+function func_gen_address_param() {
+  if [[ "$ADDRESS_POOL" == "true" && "$ADDRESS_POOL_FILE" != "/dev/null" ]]; then
+    local ip=$(shuf -n 1 "${ADDRESS_POOL_FILE}")
+    echo "--interface ${ip}"
+  else
+    echo ""
+  fi
+}
+
 function func_check_state() {
   local _url=$1
   local _mode=$2
@@ -430,7 +445,11 @@ function func_check_state() {
   # - More ban-proof compared to youtube-dl
   # Cons:
   # - Can get wrong live state due to page caching, network interrupts, etc.
-  local _body=$(curl -s --compressed -H "User-Agent: $USER_AGENT" "$_url")
+  local address_param=$(func_gen_address_param)
+  if [ "$address_param" ]; then
+    __info "using address: ${address_param##* }"
+  fi
+  local _body=$(curl $address_param -s --compressed -H "User-Agent: $USER_AGENT" "$_url")
 
   METADATA_CURL=`echo "$_body" | grep '"ytInitialPlayerResponse"' | perl -pe 's/^.*?({".*}).*/\1/g' | jq -r .`
 
@@ -1321,7 +1340,8 @@ Options:
   --skip-email                Skip sending email notification
   --skip-slack                Skip sending Slack notification
   --skip-telegram             Skip sending Telegram notification
-  --callback                  Run the callback after videos downloaded
+  --callback [EXECUTABLE]     Run the callback after videos downloaded
+  --address-pool [list.txt]   Use multiple addresses for curl to prevent 429 Error          
   --once, -1                  Run only once, default: false
   --debug                     Show debug logs, default: false"
   exit 1
@@ -1354,6 +1374,7 @@ CONFIG_SKIP_EMAIL=`echo $CONFIG_RAW | jq -r '.config.skip_email | select(.!=null
 CONFIG_SKIP_SLACK=`echo $CONFIG_RAW | jq -r '.config.skip_slack | select(.!=null)'`
 CONFIG_SKIP_TELEGRAM=`echo $CONFIG_RAW | jq -r '.config.skip_telegram | select(.!=null)'`
 CONFIG_CALLBACK=`echo $CONFIG_RAW | jq -r '.config.run_callback | select(.!=null)'`
+CONFIG_ADDRESS_POOL=`echo $CONFIG_RAW | jq -r '.config.address_pool | select(.!=null)'`
 CONFIG_ONE_TIME=`echo $CONFIG_RAW | jq -r '.config.one_time | select(.!=null)'`
 CONFIG_EMAIL_PROVIDER=`echo $CONFIG_RAW | jq -r '.config.email_provider | select(.!=null)'`
 CONFIG_MAILGUN_API=`echo $CONFIG_RAW | jq -r '.config.mailgun.api | select(.!=null)'`
@@ -1367,6 +1388,7 @@ CONFIG_SLACK_WEBHOOK=`echo $CONFIG_RAW | jq -r '.config.slack.webhook | select(.
 CONFIG_TELEGRAM_BOT=`echo $CONFIG_RAW | jq -r '.config.telegram.bot | select(.!=null)'`
 CONFIG_TELEGRAM_CHANNEL=`echo $CONFIG_RAW | jq -r '.config.telegram.channel | select(.!=null)'`
 CONFIG_CALLBACK_EXEC=`echo $CONFIG_RAW | jq -r '.config.callback.executable | select(.!=null)'`
+CONFIG_ADDRESS_POOL_FILE=`echo $CONFIG_RAW | jq -r '.config.address_pool_file | select(.!=null)'`
 
 MODE="${PARAM_MODE:-$CONFIG_MODE}"
 BASE_DIR="${_PARAM_BASE_DIR:-$CONFIG_BASE_DIR}"
@@ -1379,6 +1401,8 @@ SKIP_SLACK="${PARAM_SKIP_SLACK:-$CONFIG_SKIP_SLACK}"
 SKIP_TELEGRAM="${PARAM_SKIP_TELEGRAM:-$CONFIG_SKIP_TELEGRAM}"
 CALLBACK="${PARAM_CALLBACK:-$CONFIG_CALLBACK}"
 CALLBACK_EXEC="${PARAM_CALLBACK_EXEC:-$CONFIG_CALLBACK_EXEC}"
+ADDRESS_POOL="${PARAM_ADDRESS_POOL:-$CONFIG_ADDRESS_POOL}"
+ADDRESS_POOL_FILE="${PARAM_ADDRESS_POOL_FILE:-$CONFIG_ADDRESS_POOL_FILE}"
 ONE_TIME="${PARAM_ONE_TIME:-$CONFIG_ONE_TIME}"
 URL_INPUT="$1"
 
@@ -1394,6 +1418,7 @@ __info "Skip email notification        : ${SKIP_EMAIL}"
 __info "Skip Slack notification        : ${SKIP_SLACK}"
 __info "Skip Telegram notification     : ${SKIP_TELEGRAM}"
 __info "Callback                       : ${CALLBACK}"
+__info "Address Pool                   : ${ADDRESS_POOL}"
 __info "Email provider                 : ${CONFIG_EMAIL_PROVIDER}"
 __info "One-time execution             : ${ONE_TIME}"
 

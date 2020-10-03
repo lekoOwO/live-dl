@@ -22,6 +22,7 @@ config:
   skip_slack: false
   skip_telegram: false
   run_callback: false
+  address_pool: false
   one_time: false
   timezone: Asia/Tokyo
   email_provider: ses
@@ -47,6 +48,7 @@ config:
   callback:
     # `EXECUTABLE "${OUTPUT_PATH}.mp4" "$BASE_DIR/" $VIDEO_ID $FULLTITLE $UPLOADER $UPLOAD_DATE` will be called.
     executable: /dev/null
+  address_pool_file: /dev/null
 
 map:
   - name: Sparanoid
