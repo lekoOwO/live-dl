@@ -612,7 +612,11 @@ function func_check_state() {
       ([ "$CONTENT_STATE" == "offline" ] && [ "$_mode" == "lazy" ])
     then
       __info "Re-checking via youtube-dl..."
+
       local _youtube_dl_address_param=$(func_gen_youtube_dl_address_param)
+      if [ "$_youtube_dl_address_param" ]; then
+        __info "using address: ${_youtube_dl_address_param##* }"
+      fi
       METADATA=`youtube-dl --ignore-config --no-playlist --playlist-items 0 \
         --skip-download --print-json --referer 'https://www.youtube.com/feed/subscriptions' \
         -o '%(upload_date)s %(title)s (%(id)s).%(ext)s' \
