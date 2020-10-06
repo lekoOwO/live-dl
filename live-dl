@@ -415,10 +415,19 @@ function func_create_url() {
   fi
 }
 
-function func_gen_address_param() {
+function func_gen_curl_address_param() {
   if [[ "$ADDRESS_POOL" == "true" && "$ADDRESS_POOL_FILE" != "/dev/null" ]]; then
     local ip=$(shuf -n 1 "${ADDRESS_POOL_FILE}")
     echo "--interface ${ip}"
+  else
+    echo ""
+  fi
+}
+
+function func_gen_youtube_dl_address_param() {
+  if [[ "$ADDRESS_POOL" == "true" && "$ADDRESS_POOL_FILE" != "/dev/null" ]]; then
+    local ip=$(shuf -n 1 "${ADDRESS_POOL_FILE}")
+    echo "--source-address ${ip}"
   else
     echo ""
   fi
@@ -449,7 +458,7 @@ function func_check_state() {
   # - More ban-proof compared to youtube-dl
   # Cons:
   # - Can get wrong live state due to page caching, network interrupts, etc.
-  local address_param=$(func_gen_address_param)
+  local address_param=$(func_gen_curl_address_param)
   if [ "$address_param" ]; then
     __info "using address: ${address_param##* }"
   fi
@@ -603,9 +612,11 @@ function func_check_state() {
       ([ "$CONTENT_STATE" == "offline" ] && [ "$_mode" == "lazy" ])
     then
       __info "Re-checking via youtube-dl..."
+      local _youtube_dl_address_param=$(func_gen_youtube_dl_address_param)
       METADATA=`youtube-dl --ignore-config --no-playlist --playlist-items 0 \
         --skip-download --print-json --referer 'https://www.youtube.com/feed/subscriptions' \
         -o '%(upload_date)s %(title)s (%(id)s).%(ext)s' \
+        ${_youtube_dl_address_param} \
         "$_url" 2>&1`
 
       # Check if returns nothing
