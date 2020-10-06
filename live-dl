@@ -175,6 +175,10 @@ while [ $# -gt 0 ]; do
       PARAM_ONE_TIME=true
       shift
       ;;
+    --image-proxy)
+      PARAM_IMAGE_PROXY=true
+      shift
+      ;;
     *) # other unknown options
       POSITIONAL+=("$1") # save it in an array for later
       shift
@@ -910,7 +914,7 @@ function func_send_telegram() {
                 ],
                 [
                   {"text": "View channel", "url": "'"$CHANNEL_URL"'"},
-                  {"text": "View artwork", "url": "'"$IMAGE_PROXY$THUMBNAIL_CALC"'"}
+                  {"text": "View artwork", "url": "'"$IMAGE_PROXY_BASE$THUMBNAIL_CALC"'"}
                 ]
               ]
             },
@@ -1343,7 +1347,8 @@ Options:
   --callback [EXECUTABLE]     Run the callback after videos downloaded
   --address-pool [list.txt]   Use multiple addresses for curl to prevent 429 Error          
   --once, -1                  Run only once, default: false
-  --debug                     Show debug logs, default: false"
+  --debug                     Show debug logs, default: false
+  --image-proxy               Enable image proxy for China users, default: false"
   exit 1
 fi
 
@@ -1376,6 +1381,7 @@ CONFIG_SKIP_TELEGRAM=`echo $CONFIG_RAW | jq -r '.config.skip_telegram | select(.
 CONFIG_CALLBACK=`echo $CONFIG_RAW | jq -r '.config.run_callback | select(.!=null)'`
 CONFIG_ADDRESS_POOL=`echo $CONFIG_RAW | jq -r '.config.address_pool | select(.!=null)'`
 CONFIG_ONE_TIME=`echo $CONFIG_RAW | jq -r '.config.one_time | select(.!=null)'`
+CONFIG_IMAGE_PROXY=`echo $CONFIG_RAW | jq -r '.config.image_proxy | select(.!=null)'`
 CONFIG_EMAIL_PROVIDER=`echo $CONFIG_RAW | jq -r '.config.email_provider | select(.!=null)'`
 CONFIG_MAILGUN_API=`echo $CONFIG_RAW | jq -r '.config.mailgun.api | select(.!=null)'`
 CONFIG_MAILGUN_DOMAIN=`echo $CONFIG_RAW | jq -r '.config.mailgun.domain | select(.!=null)'`
@@ -1404,7 +1410,12 @@ CALLBACK_EXEC="${PARAM_CALLBACK_EXEC:-$CONFIG_CALLBACK_EXEC}"
 ADDRESS_POOL="${PARAM_ADDRESS_POOL:-$CONFIG_ADDRESS_POOL}"
 ADDRESS_POOL_FILE="${PARAM_ADDRESS_POOL_FILE:-$CONFIG_ADDRESS_POOL_FILE}"
 ONE_TIME="${PARAM_ONE_TIME:-$CONFIG_ONE_TIME}"
+IMAGE_PROXY="${PARAM_IMAGE_PROXY:-$CONFIG_IMAGE_PROXY}"
 URL_INPUT="$1"
+
+if [ "IMAGE_PROXY" != "true" ]; then
+  IMAGE_PROXY_BASE=""
+fi
 
 # Print current variables for reference
 __info "URL (URI) to process           : ${URL_INPUT}"
