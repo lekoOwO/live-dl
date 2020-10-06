@@ -604,7 +604,7 @@ function func_check_state() {
     then
       __info "Re-checking via youtube-dl..."
       METADATA=`youtube-dl --ignore-config --no-playlist --playlist-items 0 \
-        --skip-download --print-json --force-ipv4 --referer 'https://www.youtube.com/feed/subscriptions' \
+        --skip-download --print-json --referer 'https://www.youtube.com/feed/subscriptions' \
         -o '%(upload_date)s %(title)s (%(id)s).%(ext)s' \
         "$_url" 2>&1`
 
@@ -1175,7 +1175,6 @@ function func_download_youtube() {
         --sub-lang en,zh-Hans,zh-Hant,ja \
         --sub-format best \
         --embed-subs \
-        --force-ipv4 \
         --retries 30 \
         -o "${OUTPUT_BASE}/%(upload_date)s %(title)s (%(id)s).%(ext)s" \
         "${WEBPAGE_URL}"
@@ -1189,7 +1188,6 @@ function func_download_youtube() {
         --write-sub \
         --sub-lang en,zh-Hans,zh-Hant,ja \
         --sub-format best \
-        --force-ipv4 \
         --retries 30 \
         -o "${OUTPUT_BASE}/%(upload_date)s %(title)s (%(id)s).%(ext)s" \
         "${WEBPAGE_URL}"
