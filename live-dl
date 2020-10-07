@@ -1158,14 +1158,12 @@ function func_download_youtube() {
   if [ "$CONTENT_STATE" == "live" ]; then
     streamlink \
       --force \
-      --http-timeout 180 \
       --hls-live-restart \
       --hls-segment-threads 10 \
-      --hls-segment-timeout 120 \
-      --hls-segment-attempts 300 \
+      --hls-segment-timeout 10 \
+      --hls-segment-attempts 10 \
       --hls-segment-ignore-names preloading \
       --hls-playlist-reload-attempts 30 \
-      --hls-live-edge 5 \
       --hls-timeout 90 \
       --ringbuffer-size 256M \
       --loglevel trace \
