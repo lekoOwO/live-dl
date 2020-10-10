@@ -433,6 +433,27 @@ function func_gen_youtube_dl_address_param() {
   fi
 }
 
+function func_get_actual_video_url_of_live() {
+  local _url=$1
+  local regex="https:\/\/www.youtube.com\/channel\/(.+)\/live"
+  if [[ "$_url" =~ $regex ]] ; then
+    local CHANNEL_ID="${BASH_REMATCH[1]}"
+
+    # Get video url
+    local _url="https://www.youtube.com/embed/live_stream?channel=${CHANNEL_ID}"
+    local regex='.+?<link rel="canonical" href="(.+)">.+'
+
+    local address_param=$(func_gen_curl_address_param)
+    local _body=$(curl $address_param -s --compressed -H "User-Agent: $USER_AGENT" "$_url")
+
+    [[ "$_body" =~ $regex ]]
+    local VIDEO_URL="${BASH_REMATCH[1]%%\"*}"
+    echo "$VIDEO_URL"
+  else
+    echo "$_url"
+  fi
+}
+
 function func_check_state() {
   local _url=$1
   local _mode=$2
@@ -613,6 +634,8 @@ function func_check_state() {
     then
       __info "Re-checking via youtube-dl..."
 
+      local _url=$(func_get_actual_video_url_of_live "$_url")
+      __info "Get real video url: $_url"
       local _youtube_dl_address_param=$(func_gen_youtube_dl_address_param)
       if [ "$_youtube_dl_address_param" ]; then
         __info "using address: ${_youtube_dl_address_param##* }"
