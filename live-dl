@@ -1086,7 +1086,11 @@ function func_create_file_name() {
      [ -f "$output_dir/${file_base_name}.finished" ]
   then
     local -i NUM_POSTFIX=1
-    while [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}${EXTENSION}" ]; do
+    while [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}${EXTENSION}" ] || \
+     [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.mp4" ] || \
+     [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.log" ] || \
+     [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.jpg" ] || \
+     [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.finished" ]; do
       let NUM_POSTFIX+=1
     done
     echo "${file_base_name}.${NUM_POSTFIX}"
