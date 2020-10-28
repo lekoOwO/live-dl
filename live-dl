@@ -1249,6 +1249,7 @@ function func_finalize_download() {
     __info "Converting to MP4"
     ffmpeg -i "${OUTPUT_PATH}${EXTENSION}" -y \
       -codec copy \
+      -movflags faststart \
       "$OUTPUT_PATH.mp4" >> "$OUTPUT_PATH.log" 2>&1
 
     # Remove original TS file
@@ -1268,6 +1269,7 @@ function func_finalize_download() {
         -metadata date="$UPLOAD_DATE" \
         -metadata description="$DESCRIPTION" \
         -metadata comment="$DESCRIPTION" \
+        -movflags faststart \
         "$OUTPUT_PATH-metadata.mp4" >> "$OUTPUT_PATH.log" 2>&1
       rm -f "$OUTPUT_PATH.mp4" && mv "$OUTPUT_PATH-metadata.mp4" "$OUTPUT_PATH.mp4"
     else
@@ -1287,6 +1289,7 @@ function func_finalize_download() {
           -map 1 -map 0 \
           -codec copy \
           -disposition:0 attached_pic \
+          -movflags faststart \
           "$OUTPUT_PATH-artwork.mp4" >> "$OUTPUT_PATH.log" 2>&1
         rm -f "$OUTPUT_PATH.mp4" && mv "$OUTPUT_PATH-artwork.mp4" "$OUTPUT_PATH.mp4"
       else
