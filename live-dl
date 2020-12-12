@@ -224,8 +224,7 @@ function func_check_deps() {
   else
     __info "youtube-dlc not found, trying to install..."
     if [ "$OSTYPE" == "linux-gnu" ]; then
-      curl -L https://yt-dl.org/downloads/latest/youtube-dlc -o /usr/local/bin/youtube-dlc
-      chmod a+rx /usr/local/bin/youtube-dlc
+      pip install youtube-dlc
     elif [[ "$OSTYPE" == "darwin"* ]]; then
       brew install ffmpeg
     else
