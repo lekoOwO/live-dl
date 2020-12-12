@@ -37,7 +37,7 @@ Tested on macOS 10.14, should be working on RHEL/CentOS 7 and Ubuntu.
 ```
 apk add --no-cache aria2 bash ffmpeg python3 perl build-base curl jq exiv2-dev coreutils
 apk add exiv2 --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
-pip3 install streamlink youtube-dl yq
+pip3 install streamlink youtube-dlc yq
 ```
 
 ## Usage
