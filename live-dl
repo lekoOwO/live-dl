@@ -574,8 +574,6 @@ function func_check_state() {
 
     # Print current state for first check
     __debug "Current state for first check: $(__yellow "$CONTENT_STATE")"
-  else
-    __info "$(__yellow "Not a valid page, something wrong with your internet connection?")"
   fi
 
   # Old method:
