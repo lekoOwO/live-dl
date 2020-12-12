@@ -489,13 +489,13 @@ function func_check_state() {
   METADATA_CURL_RAW=`echo "$_body" | grep "ytInitialPlayerResponse"`
 
   # NOTE: Dec 12, 2020
-  echo _body| grep -q "var ytInitialPlayerResponse"
+  echo "${_body}" | grep -q "var ytInitialPlayerResponse"
   local status=$?
 
   if [[ "$status" == "0" ]]; then
     METADATA_CURL=`echo "$METADATA_CURL_RAW" | perl -pe 's/^.*?({".*}).*/\1/g' | jq -r .`
   else
-    METADATA_CURL="{}"
+    METADATA_CURL=""
     __debug "var ytInitialPlayerResponse returns null"
   fi
 
