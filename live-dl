@@ -1536,12 +1536,12 @@ while true; do
         # Send notifications
         # https://stackoverflow.com/a/49819711/412385
         _break=$'\n\n'
-        func_send_email "🔴 [YouTube] $UPLOADER - $FULLTITLE" "$SUMMARY_TRIM$_break$DESCRIPTION"
-        func_send_slack "start"
-        func_send_telegram "start"
+        func_send_email "🔴 [YouTube] $UPLOADER - $FULLTITLE" "$SUMMARY_TRIM$_break$DESCRIPTION" &
+        func_send_slack "start" &
+        func_send_telegram "start" &
         func_download_youtube
         func_finalize_download
-        func_send_email "⚫️ [YouTube] $UPLOADER - $FULLTITLE" "$FILE_SUMMARY_TRIM"
+        func_send_email "⚫️ [YouTube] $UPLOADER - $FULLTITLE" "$FILE_SUMMARY_TRIM" &
         func_callback
 
       #
