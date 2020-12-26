@@ -60,7 +60,11 @@
 #
 # Variables
 #
-USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36"
+# USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36"
+
+# Dec 26 2020
+# If User Agent is set to Chrome, jq parses it error.
+USER_AGENT="live-dl"
 IMAGE_PROXY_BASE="https://experiments.sparanoid.net/imageproxy/"
 
 #
