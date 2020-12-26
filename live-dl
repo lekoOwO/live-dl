@@ -485,7 +485,7 @@ function func_check_state() {
   local _body=$(curl $address_param -s --compressed -H "User-Agent: $USER_AGENT" "$_url")
 
   # NOTE: Dec 12, 2020
-  echo "$_body" | grep -q "var ytInitialPlayerResponse" &> /dev/null
+  echo "$_body" 2>/dev/null | grep -q "var ytInitialPlayerResponse" &> /dev/null
   local status=$?
 
   if [[ "$status" == "0" ]]; then
