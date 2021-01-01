@@ -722,6 +722,10 @@ function func_check_state() {
 
         # Print current state for second check
         __debug "Current state for second check: $(__yellow "$CONTENT_STATE")"
+      else
+        func_process_youtube_metadata
+        func_process_channel_mapping
+        func_finalize_vars
       fi
     fi
   fi
