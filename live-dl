@@ -461,6 +461,28 @@ function func_get_actual_video_url_of_live() {
   fi
 }
 
+function _gen_metadata_curl(){
+  local _url=$1
+
+  local address_param=$(func_gen_curl_address_param)
+  if [ "$address_param" ]; then
+    __info "using address: ${address_param##* }"
+  fi
+  local _body=$(curl $address_param -s --compressed -H "User-Agent: $USER_AGENT" "$_url")
+
+  # NOTE: Dec 12, 2020
+  echo "$_body" 2>/dev/null | grep -q "var ytInitialPlayerResponse" &> /dev/null
+  local status=$?
+
+  if [[ "$status" == "0" ]]; then
+      # Extract metadata from fetched page
+    METADATA_CURL=`echo "$_body" | grep -oP "var ytInitialPlayerResponse = \K.*(?=;</script>)" | jq -r .`
+  else
+    METADATA_CURL=""
+    __debug "var ytInitialPlayerResponse returns null"
+  fi
+}
+
 function func_check_state() {
   local _url=$1
   local _mode=$2
@@ -486,23 +508,7 @@ function func_check_state() {
   # - More ban-proof compared to youtube-dlc
   # Cons:
   # - Can get wrong live state due to page caching, network interrupts, etc.
-  local address_param=$(func_gen_curl_address_param)
-  if [ "$address_param" ]; then
-    __info "using address: ${address_param##* }"
-  fi
-  local _body=$(curl $address_param -s --compressed -H "User-Agent: $USER_AGENT" "$_url")
-
-  # NOTE: Dec 12, 2020
-  echo "$_body" 2>/dev/null | grep -q "var ytInitialPlayerResponse" &> /dev/null
-  local status=$?
-
-  if [[ "$status" == "0" ]]; then
-      # Extract metadata from fetched page
-    METADATA_CURL=`echo "$_body" | grep -oP "var ytInitialPlayerResponse = \K.*(?=;</script>)" | jq -r .`
-  else
-    METADATA_CURL=""
-    __debug "var ytInitialPlayerResponse returns null"
-  fi
+  _gen_metadata_curl "$_url"
 
   # Check if returns nothing
   if [ ! -z "$METADATA_CURL" ]; then
@@ -513,6 +519,15 @@ function func_check_state() {
     # return `null`
     IS_LIVE=$(echo "$METADATA_CURL" | jq -r '.videoDetails.isLive | select(.!=null)')
     __debug "Is live: $IS_LIVE"
+
+    # 2021.01.01
+    # if using the original $METADATA_CURL (Fetched by /live link), there's no .microformat.playerMicroformatRenderer exist
+    # Causes issue when skip recheck is on.
+    if [ "${IS_LIVE}" == "true" ]; then
+      VIDEO_ID=$(echo "$METADATA_CURL" | jq -r '.videoDetails.videoId')
+      local _url="https://www.youtube.com/watch?v=${VIDEO_ID}"
+      _gen_metadata_curl "$_url"
+    fi
 
     # This status will always return:
     # - `OK` for live streams, private streams, or normal videos,
@@ -545,12 +560,13 @@ function func_check_state() {
     DESCRIPTION=$(echo "$METADATA_CURL" | jq -r '.videoDetails.shortDescription')
     UPLOADER=$(echo "$METADATA_CURL" | jq -r '.videoDetails.author')
     CHANNEL_ID=$(echo "$METADATA_CURL" | jq -r '.videoDetails.channelId')
+    THUMBNAIL=$(echo "$METADATA_CURL" | jq -r '.videoDetails.thumbnail.thumbnails[-1].url')
+    AVERAGE_RATING=$(echo "$METADATA_CURL" | jq -r '.videoDetails.averageRating')
+    VIEW_COUNT=$(echo "$METADATA_CURL" | jq -r '.videoDetails.viewCount')
     UPLOAD_DATE=$(echo "$METADATA_CURL" | jq -r '.microformat.playerMicroformatRenderer.uploadDate')
     UPLOADER=$(echo "$METADATA_CURL" | jq -r '.microformat.playerMicroformatRenderer.ownerChannelName')
-    WEBPAGE_URL="https://www.youtube.com/watch?v=${VIDEO_ID}"
     CHANNEL_URL=$(echo "$METADATA_CURL" | jq -r '.microformat.playerMicroformatRenderer.ownerProfileUrl')
-    VIEW_COUNT=$(echo "$METADATA_CURL" | jq -r '.videoDetails.viewCount')
-    AVERAGE_RATING=$(echo "$METADATA_CURL" | jq -r '.videoDetails.averageRating')
+    WEBPAGE_URL="https://www.youtube.com/watch?v=${VIDEO_ID}"
 
     # If I got `isLive: true` in first check, let me assume it's live but I can't trust it so I
     # will do a secound check using youtube-dlc later with this flag.
