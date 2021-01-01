@@ -16,6 +16,7 @@ config:
   interval: 10
   skip_alias: false
   skip_check: false
+  skip_recheck: true
   skip_convert: false
   skip_metadata: false
   skip_email: false
