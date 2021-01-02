@@ -1069,6 +1069,8 @@ function func_process_youtube_metadata() {
     FILENAME=$(echo "$METADATA" | jq -r '._filename' | sed -e 's/.mp4//' | sed -e 's/.webm//')
   else
     FILENAME="$UPLOAD_DATE $FULLTITLE $VIDEO_ID"
+    # Escape
+    FILENAME="${FILENAME////∕}"
   fi
 }
 
