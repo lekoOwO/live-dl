@@ -1168,7 +1168,11 @@ function func_finalize_vars() {
 
   # Write prettified JSON metadata to file
   func_prepare_dir "$OUTPUT_BASE"
-  METADATA_PRETTIFIED=`echo $METADATA | jq .`
+  if [ "$SKIP_RECHECK" != "true" ]; then
+    METADATA_PRETTIFIED=`echo $METADATA | jq .`
+  else
+    METADATA_PRETTIFIED=`echo ${METADATA_CURL} | jq .`
+  fi
   echo "$METADATA_PRETTIFIED" > "$OUTPUT_PATH.json"
 
   # Download thumbnail
