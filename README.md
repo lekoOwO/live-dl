@@ -27,16 +27,18 @@ Download live streams from YouTube.
 - ffmpeg
 - jq
 - streamlink
-- youtube-dl
+- youtube-dlc
 - yq (python-yq)
+- atomicparsley
 
-Tested on macOS 10.14, should be working on RHEL/CentOS 7 and Ubuntu.
+Tested on macOS 10.14 and Alpine Linux, so it should work on most Linux distros.
 
 ### Alpine Linux
 
 ```
-apk add --no-cache aria2 bash ffmpeg python3 perl build-base curl jq exiv2-dev coreutils
+apk add --no-cache aria2 bash ffmpeg python3 py3-pip perl build-base curl jq git nano exiv2-dev coreutils grep
 apk add exiv2 --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+apk add --no-cache atomicparsley --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 pip3 install streamlink youtube-dlc yq
 ```
 
@@ -58,6 +60,14 @@ ps aux | grep live-dl
 # Stop process
 kill 94552
 ```
+
+## Caution
+
+Due to the live stream detecting mechanism limit, the record might have a 10\~18 sec delay. Thus, the first 10\~18 secs of the live stream might be miscaptured.
+
+Also, the stream recording is stopped when the stream reached 6 hrs due to YouTube's limit. Though we tried to restart `live-dl` immediately, but a 30sec miss or more can't be avoided.
+
+To handle this situation, we strongly recommend re-download the stream after a few hours it ends manually.
 
 ## License
 
