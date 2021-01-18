@@ -51,7 +51,7 @@ config:
     # `EXECUTABLE "${OUTPUT_PATH}.mp4" "$BASE_DIR/" $VIDEO_ID $FULLTITLE $UPLOADER $UPLOAD_DATE` will be called.
     executable: /dev/null
   onlive:
-    # `EXECUTABLE "${OUTPUT_PATH}" "$BASE_DIR/" $VIDEO_ID $FULLTITLE $UPLOADER $UPLOAD_DATE` will be called.
+    # `EXECUTABLE "${OUTPUT_PATH}" "$BASE_DIR/" $VIDEO_ID $FULLTITLE $UPLOADER $UPLOAD_DATE $THUMBNAIL_CALC` will be called.
     executable: /dev/null
   address_pool_file: /dev/null
 

@@ -1412,7 +1412,7 @@ function func_onlive() {
   if [ $ONLIVE == "true" ]; then
     if [ $ONLIVE_EXEC != "/dev/null" ]; then 
       __info "Calling onlive function..."
-      local cmd=( "$ONLIVE_EXEC" "${OUTPUT_PATH}" "$BASE_DIR/" "$VIDEO_ID" "$FULLTITLE" "$UPLOADER" "$UPLOAD_DATE" )
+      local cmd=( "$ONLIVE_EXEC" "${OUTPUT_PATH}" "$BASE_DIR/" "$VIDEO_ID" "$FULLTITLE" "$UPLOADER" "$UPLOAD_DATE" "$THUMBNAIL_CALC")
       nohup "${cmd[@]}" &>> "$OUTPUT_PATH.log" &
     else
       __info "$(__yellow "No onlive executable specified.")"
