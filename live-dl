@@ -173,6 +173,12 @@ while [ $# -gt 0 ]; do
       shift
       shift
       ;;
+    --onlive)
+      PARAM_ONLIVE=true
+      PARAM_ONLIVE_EXEC="$2"
+      shift
+      shift
+      ;;
     --address-pool)
       PARAM_ADDRESS_POOL=true
       PARAM_ADDRESS_POOL_FILE="$2"
@@ -1402,6 +1408,18 @@ function func_callback() {
   fi
 }
 
+function func_onlive() {
+  if [ $ONLIVE == "true" ]; then
+    if [ $ONLIVE_EXEC != "/dev/null" ]; then 
+      __info "Calling onlive function..."
+      local cmd=( "$ONLIVE_EXEC" "${OUTPUT_PATH}" "$BASE_DIR/" "$VIDEO_ID" "$FULLTITLE" "$UPLOADER" "$UPLOAD_DATE" )
+      nohup "${cmd[@]}" &>> "$OUTPUT_PATH.log" &
+    else
+      __info "$(__yellow "No onlive executable specified.")"
+    fi
+  fi
+}
+
 #
 # Executes
 #
@@ -1444,6 +1462,7 @@ Options:
   --skip-slack                Skip sending Slack notification
   --skip-telegram             Skip sending Telegram notification
   --callback [EXECUTABLE]     Run the callback after videos downloaded
+  --onlive [EXECUTABLE]       Run the executable before livestream starts downloading
   --address-pool [list.txt]   Use multiple addresses for curl to prevent 429 Error          
   --once, -1                  Run only once, default: false
   --debug                     Show debug logs, default: false
@@ -1478,6 +1497,7 @@ CONFIG_SKIP_EMAIL=`echo $CONFIG_RAW | jq -r '.config.skip_email | select(.!=null
 CONFIG_SKIP_SLACK=`echo $CONFIG_RAW | jq -r '.config.skip_slack | select(.!=null)'`
 CONFIG_SKIP_TELEGRAM=`echo $CONFIG_RAW | jq -r '.config.skip_telegram | select(.!=null)'`
 CONFIG_CALLBACK=`echo $CONFIG_RAW | jq -r '.config.run_callback | select(.!=null)'`
+CONFIG_ONLIVE=`echo $CONFIG_RAW | jq -r '.config.run_onlive | select(.!=null)'`
 CONFIG_ADDRESS_POOL=`echo $CONFIG_RAW | jq -r '.config.address_pool | select(.!=null)'`
 CONFIG_ONE_TIME=`echo $CONFIG_RAW | jq -r '.config.one_time | select(.!=null)'`
 CONFIG_IMAGE_PROXY=`echo $CONFIG_RAW | jq -r '.config.image_proxy | select(.!=null)'`
@@ -1493,6 +1513,7 @@ CONFIG_SLACK_WEBHOOK=`echo $CONFIG_RAW | jq -r '.config.slack.webhook | select(.
 CONFIG_TELEGRAM_BOT=`echo $CONFIG_RAW | jq -r '.config.telegram.bot | select(.!=null)'`
 CONFIG_TELEGRAM_CHANNEL=`echo $CONFIG_RAW | jq -r '.config.telegram.channel | select(.!=null)'`
 CONFIG_CALLBACK_EXEC=`echo $CONFIG_RAW | jq -r '.config.callback.executable | select(.!=null)'`
+CONFIG_ONLIVE_EXEC=`echo $CONFIG_RAW | jq -r '.config.onlive.executable | select(.!=null)'`
 CONFIG_ADDRESS_POOL_FILE=`echo $CONFIG_RAW | jq -r '.config.address_pool_file | select(.!=null)'`
 
 MODE="${PARAM_MODE:-$CONFIG_MODE}"
@@ -1506,6 +1527,8 @@ SKIP_SLACK="${PARAM_SKIP_SLACK:-$CONFIG_SKIP_SLACK}"
 SKIP_TELEGRAM="${PARAM_SKIP_TELEGRAM:-$CONFIG_SKIP_TELEGRAM}"
 CALLBACK="${PARAM_CALLBACK:-$CONFIG_CALLBACK}"
 CALLBACK_EXEC="${PARAM_CALLBACK_EXEC:-$CONFIG_CALLBACK_EXEC}"
+ONLIVE="${PARAM_ONLIVE:-$CONFIG_ONLIVE}"
+ONLIVE_EXEC="${PARAM_ONLIVE_EXEC:-$CONFIG_ONLIVE_EXEC}"
 ADDRESS_POOL="${PARAM_ADDRESS_POOL:-$CONFIG_ADDRESS_POOL}"
 ADDRESS_POOL_FILE="${PARAM_ADDRESS_POOL_FILE:-$CONFIG_ADDRESS_POOL_FILE}"
 ONE_TIME="${PARAM_ONE_TIME:-$CONFIG_ONE_TIME}"
@@ -1528,6 +1551,7 @@ __info "Skip email notification        : ${SKIP_EMAIL}"
 __info "Skip Slack notification        : ${SKIP_SLACK}"
 __info "Skip Telegram notification     : ${SKIP_TELEGRAM}"
 __info "Callback                       : ${CALLBACK}"
+__info "Onlive                         : ${ONLIVE}"
 __info "Address Pool                   : ${ADDRESS_POOL}"
 __info "Email provider                 : ${CONFIG_EMAIL_PROVIDER}"
 __info "One-time execution             : ${ONE_TIME}"
@@ -1587,6 +1611,7 @@ while true; do
         func_send_email "🔴 [YouTube] $UPLOADER - $FULLTITLE" "$SUMMARY_TRIM$_break$DESCRIPTION" &
         func_send_slack "start" &
         func_send_telegram "start" &
+        func_onlive &
         func_download_youtube
         {
           func_finalize_download

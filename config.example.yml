@@ -22,6 +22,7 @@ config:
   skip_slack: false
   skip_telegram: false
   run_callback: false
+  run_onlive: false
   address_pool: false
   one_time: false
   image_proxy: false
@@ -48,6 +49,9 @@ config:
     channel: 0000000000000
   callback:
     # `EXECUTABLE "${OUTPUT_PATH}.mp4" "$BASE_DIR/" $VIDEO_ID $FULLTITLE $UPLOADER $UPLOAD_DATE` will be called.
+    executable: /dev/null
+  onlive:
+    # `EXECUTABLE "${OUTPUT_PATH}" "$BASE_DIR/" $VIDEO_ID $FULLTITLE $UPLOADER $UPLOAD_DATE` will be called.
     executable: /dev/null
   address_pool_file: /dev/null
 
