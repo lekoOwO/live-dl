@@ -1137,6 +1137,7 @@ function func_create_file_name() {
 
   if [ -f "$output_dir/${file_base_name}${EXTENSION}" ] || \
      [ -f "$output_dir/${file_base_name}.mp4" ] || \
+     [ -f "$output_dir/${file_base_name}.ts" ] || \
      [ -f "$output_dir/${file_base_name}.log" ] || \
      [ -f "$output_dir/${file_base_name}.jpg" ] || \
      [ -f "$output_dir/${file_base_name}.json" ] || \
@@ -1145,6 +1146,7 @@ function func_create_file_name() {
     local -i NUM_POSTFIX=1
     while [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}${EXTENSION}" ] || \
      [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.mp4" ] || \
+     [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.ts" ] || \
      [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.log" ] || \
      [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.jpg" ] || \
      [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.json" ] || \
