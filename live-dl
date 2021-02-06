@@ -447,6 +447,15 @@ function func_gen_youtube_dl_address_param() {
   fi
 }
 
+function func_gen_streamlink_address_param() {
+  if [[ "$ADDRESS_POOL" == "true" && "$ADDRESS_POOL_FILE" != "/dev/null" ]]; then
+    local ip=$(shuf -n 1 "${ADDRESS_POOL_FILE}")
+    echo "--interface ${ip}"
+  else
+    echo ""
+  fi
+}
+
 function func_get_actual_video_url_of_live() {
   local _url=$1
   local regex="https:\/\/www.youtube.com\/channel\/(.+)\/live"
@@ -1247,8 +1256,12 @@ function func_download_youtube() {
   __info "Logging: tail -f \"$OUTPUT_PATH.log\""
 
   if [ "$CONTENT_STATE" == "live" ]; then
+    local _streamlink_address_param=$(func_gen_streamlink_address_param)
+    if [ "$_streamlink_address_param" ]; then
+      __info "using address: ${_streamlink_address_param##* }"
+    fi
     streamlink \
-      -4 \
+      ${_streamlink_address_param} \
       --force \
       --hls-live-restart \
       --hls-segment-threads 10 \
