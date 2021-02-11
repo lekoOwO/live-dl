@@ -449,13 +449,15 @@ function func_gen_youtube_dl_address_param() {
 
 function func_gen_streamlink_address_param() {
   if [[ "$ADDRESS_POOL" == "true" && "$ADDRESS_POOL_FILE" != "/dev/null" ]]; then
+    # Feb. 11, 2021
+    # Changed my machine, toggling it back.
     # Feb. 8, 2021
     # IPv6 works not great on my machine, so let's fallback to IPv4 on streamlink.
     
-    # local ip=$(shuf -n 1 "${ADDRESS_POOL_FILE}")
-    # echo "--interface ${ip}"
+    local ip=$(shuf -n 1 "${ADDRESS_POOL_FILE}")
+    echo "--interface ${ip}"
     
-    echo "-4"
+    # echo "-4"
   else
     echo ""
   fi
