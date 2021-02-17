@@ -1506,6 +1506,7 @@ Options:
   --skip-telegram             Skip sending Telegram notification
   --callback [EXECUTABLE]     Run the callback after videos downloaded
   --onlive [EXECUTABLE]       Run the executable before livestream starts downloading
+  --ytarchive [EXECUTABLE]    Downloads livestream using ytarchive instead of streamlink
   --address-pool [list.txt]   Use multiple addresses for curl to prevent 429 Error          
   --once, -1                  Run only once, default: false
   --debug                     Show debug logs, default: false
