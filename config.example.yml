@@ -26,6 +26,7 @@ config:
   address_pool: false
   one_time: false
   image_proxy: false
+  use_ytarchive: true
   timezone: Asia/Tokyo
   email_provider: ses
   mailgun:
@@ -52,6 +53,8 @@ config:
     executable: /dev/null
   onlive:
     # `EXECUTABLE "${OUTPUT_PATH}" "$BASE_DIR/" $VIDEO_ID $FULLTITLE $UPLOADER $UPLOAD_DATE $THUMBNAIL_CALC` will be called.
+    executable: /dev/null
+  ytarchive:
     executable: /dev/null
   address_pool_file: /dev/null
 

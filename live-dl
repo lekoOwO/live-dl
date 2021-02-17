@@ -179,6 +179,12 @@ while [ $# -gt 0 ]; do
       shift
       shift
       ;;
+    --ytarchive)
+      PARAM_YTARCHIVE=true
+      PARAM_YTARCHIVE_EXEC="$2"
+      shift
+      shift
+      ;;
     --address-pool)
       PARAM_ADDRESS_POOL=true
       PARAM_ADDRESS_POOL_FILE="$2"
@@ -1268,21 +1274,29 @@ function func_download_youtube() {
   __info "Logging: tail -f \"$OUTPUT_PATH.log\""
 
   if [ "$CONTENT_STATE" == "live" ]; then
-    local _streamlink_address_param=$(func_gen_streamlink_address_param)
-    if [ "$_streamlink_address_param" ]; then
-      __info "using address: ${_streamlink_address_param##* }"
+    if [[ $YTARCHIVE == "true" ]] && [[ $YTARCHIVE_EXEC != "/dev/null" ]]; then
+      "$YTARCHIVE_EXEC" \
+        --no-wait \
+        --vp9 \
+        -o "${OUTPUT_PATH}" \
+        "${WEBPAGE_URL}" best >> "$OUTPUT_PATH.log" 2>&1
+    else
+      local _streamlink_address_param=$(func_gen_streamlink_address_param)
+      if [ "$_streamlink_address_param" ]; then
+        __info "using address: ${_streamlink_address_param##* }"
+      fi
+      streamlink \
+        ${_streamlink_address_param} \
+        --force \
+        --hls-live-restart \
+        --hls-segment-threads 10 \
+        --hls-segment-attempts 5 \
+        --hls-segment-ignore-names preloading \
+        --ringbuffer-size 256M \
+        --loglevel trace \
+        -o "${OUTPUT_PATH}${EXTENSION}" \
+        "${WEBPAGE_URL}" best >> "$OUTPUT_PATH.log" 2>&1
     fi
-    streamlink \
-      ${_streamlink_address_param} \
-      --force \
-      --hls-live-restart \
-      --hls-segment-threads 10 \
-      --hls-segment-attempts 5 \
-      --hls-segment-ignore-names preloading \
-      --ringbuffer-size 256M \
-      --loglevel trace \
-      -o "${OUTPUT_PATH}${EXTENSION}" \
-      "${WEBPAGE_URL}" best >> "$OUTPUT_PATH.log" 2>&1
   elif [ "$CONTENT_STATE" == "video" ]; then
     if [ "$DL_TYPE" == "playlist" ]; then
       # TODO: You have to loop over all the videos to add metadata and thumbnail manually.
@@ -1332,15 +1346,19 @@ function func_finalize_download() {
   __info "Stop downloading"
 
   if [ "$CONTENT_STATE" == "live" ]; then
-    # Convert from TS to MP4 (will override existing with -y option)
-    __info "Converting to MP4"
-    ffmpeg -i "${OUTPUT_PATH}${EXTENSION}" -y \
-      -codec copy \
-      -movflags faststart \
-      "$OUTPUT_PATH.mp4" >> "$OUTPUT_PATH.log" 2>&1
+    if [[ $YTARCHIVE == "true" ]] && [[ $YTARCHIVE_EXEC != "/dev/null" ]]; then
+      __info "Using ytarchive, skipping convert to MP4."
+    else
+      # Convert from TS to MP4 (will override existing with -y option)
+      __info "Converting to MP4"
+      ffmpeg -i "${OUTPUT_PATH}${EXTENSION}" -y \
+        -codec copy \
+        -movflags faststart \
+        "$OUTPUT_PATH.mp4" >> "$OUTPUT_PATH.log" 2>&1
 
-    # Remove original TS file
-    rm -f "${OUTPUT_PATH}${EXTENSION}"
+      # Remove original TS file
+      rm -f "${OUTPUT_PATH}${EXTENSION}"
+    fi
   fi
 
   if [ ! "$SKIP_METADATA" ]; then
@@ -1523,6 +1541,7 @@ CONFIG_SKIP_SLACK=`echo $CONFIG_RAW | jq -r '.config.skip_slack | select(.!=null
 CONFIG_SKIP_TELEGRAM=`echo $CONFIG_RAW | jq -r '.config.skip_telegram | select(.!=null)'`
 CONFIG_CALLBACK=`echo $CONFIG_RAW | jq -r '.config.run_callback | select(.!=null)'`
 CONFIG_ONLIVE=`echo $CONFIG_RAW | jq -r '.config.run_onlive | select(.!=null)'`
+CONFIG_YTARCHIVE=`echo $CONFIG_RAW | jq -r '.config.use_ytarchive | select(.!=null)'`
 CONFIG_ADDRESS_POOL=`echo $CONFIG_RAW | jq -r '.config.address_pool | select(.!=null)'`
 CONFIG_ONE_TIME=`echo $CONFIG_RAW | jq -r '.config.one_time | select(.!=null)'`
 CONFIG_IMAGE_PROXY=`echo $CONFIG_RAW | jq -r '.config.image_proxy | select(.!=null)'`
@@ -1539,6 +1558,7 @@ CONFIG_TELEGRAM_BOT=`echo $CONFIG_RAW | jq -r '.config.telegram.bot | select(.!=
 CONFIG_TELEGRAM_CHANNEL=`echo $CONFIG_RAW | jq -r '.config.telegram.channel | select(.!=null)'`
 CONFIG_CALLBACK_EXEC=`echo $CONFIG_RAW | jq -r '.config.callback.executable | select(.!=null)'`
 CONFIG_ONLIVE_EXEC=`echo $CONFIG_RAW | jq -r '.config.onlive.executable | select(.!=null)'`
+CONFIG_YTARCHIVE_EXEC=`echo $CONFIG_RAW | jq -r '.config.ytarchive.executable | select(.!=null)'`
 CONFIG_ADDRESS_POOL_FILE=`echo $CONFIG_RAW | jq -r '.config.address_pool_file | select(.!=null)'`
 
 MODE="${PARAM_MODE:-$CONFIG_MODE}"
@@ -1554,6 +1574,8 @@ CALLBACK="${PARAM_CALLBACK:-$CONFIG_CALLBACK}"
 CALLBACK_EXEC="${PARAM_CALLBACK_EXEC:-$CONFIG_CALLBACK_EXEC}"
 ONLIVE="${PARAM_ONLIVE:-$CONFIG_ONLIVE}"
 ONLIVE_EXEC="${PARAM_ONLIVE_EXEC:-$CONFIG_ONLIVE_EXEC}"
+YTARCHIVE="${PARAM_YTARCHIVE:-$CONFIG_YTARCHIVE}"
+YTARCHIVE_EXEC="${PARAM_YTARCHIVE_EXEC:-$CONFIG_YTARCHIVE_EXEC}"
 ADDRESS_POOL="${PARAM_ADDRESS_POOL:-$CONFIG_ADDRESS_POOL}"
 ADDRESS_POOL_FILE="${PARAM_ADDRESS_POOL_FILE:-$CONFIG_ADDRESS_POOL_FILE}"
 ONE_TIME="${PARAM_ONE_TIME:-$CONFIG_ONE_TIME}"
@@ -1577,6 +1599,7 @@ __info "Skip Slack notification        : ${SKIP_SLACK}"
 __info "Skip Telegram notification     : ${SKIP_TELEGRAM}"
 __info "Callback                       : ${CALLBACK}"
 __info "Onlive                         : ${ONLIVE}"
+__info "ytarchive                      : ${YTARCHIVE}"
 __info "Address Pool                   : ${ADDRESS_POOL}"
 __info "Email provider                 : ${CONFIG_EMAIL_PROVIDER}"
 __info "One-time execution             : ${ONE_TIME}"
