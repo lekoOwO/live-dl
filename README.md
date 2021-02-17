@@ -63,6 +63,13 @@ kill 94552
 
 ## Caution
 
+Edit: 
+(2021/2/18) `ytarchive` is now a recommanded way to download livestreams as it supports download from the very beginning.
+
+No miscapture problems now.
+
+--
+
 Due to the live stream detecting mechanism limit, the record might have a 10\~18 sec delay. Thus, the first 10\~18 secs of the live stream might be miscaptured.
 
 Also, the stream recording is stopped when the stream reached 6 hrs due to YouTube's limit. Though we tried to restart `live-dl` immediately, but a 30sec miss or more can't be avoided.
