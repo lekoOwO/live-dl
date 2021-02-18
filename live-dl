@@ -1275,10 +1275,13 @@ function func_download_youtube() {
 
   if [ "$CONTENT_STATE" == "live" ]; then
     if [[ $YTARCHIVE == "true" ]] && [[ $YTARCHIVE_EXEC != "/dev/null" ]]; then
+      # % Has a special meaning in python
+      local tmp_output_path="${OUTPUT_PATH//%/%%}"
+      
       "$YTARCHIVE_EXEC" \
         --no-wait \
         --vp9 \
-        -o "${OUTPUT_PATH}" \
+        -o "${tmp_output_path}" \
         "${WEBPAGE_URL}" best >> "$OUTPUT_PATH.log" 2>&1
     else
       local _streamlink_address_param=$(func_gen_streamlink_address_param)
