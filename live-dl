@@ -1150,6 +1150,12 @@ function func_prepare_dir() {
   [ -d "$_dir" ] || mkdir -p "$_dir"
 }
 
+function _touch(){
+  local file=$1
+  func_prepare_dir `dirname ${file}`
+  touch "$file"
+}
+
 function func_create_file_name() {
   # Output $file_base_name.X if $file_base_name$EXTENSION exists.
   # prevents the 6hr overwrite issue.
@@ -1177,10 +1183,10 @@ function func_create_file_name() {
      [ -f "$output_dir/${file_base_name}.${NUM_POSTFIX}.finished" ]; do
       let NUM_POSTFIX+=1
     done
-    touch "$output_dir/${file_base_name}.${NUM_POSTFIX}.tmp"
+    _touch "$output_dir/${file_base_name}.${NUM_POSTFIX}.tmp"
     echo "${file_base_name}.${NUM_POSTFIX}"
   else
-    touch "$output_dir/${file_base_name}.tmp"
+    _touch "$output_dir/${file_base_name}.tmp"
     echo $file_base_name
   fi
 }
@@ -1196,13 +1202,13 @@ function func_finalize_vars() {
 
   # Output base without filename
   OUTPUT_BASE="$BASE_DIR/$FILENAME_BASE"
+  func_prepare_dir "$OUTPUT_BASE"
 
   # Full output dir
   FILENAME=$(func_create_file_name "$FILENAME" "$OUTPUT_BASE")
   OUTPUT_PATH="$OUTPUT_BASE/$FILENAME"
 
   # Write prettified JSON metadata to file
-  func_prepare_dir "$OUTPUT_BASE"
   if [ "$SKIP_RECHECK" != "true" ]; then
     METADATA_PRETTIFIED=`echo $METADATA | jq .`
   else
