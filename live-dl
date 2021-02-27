@@ -16,7 +16,7 @@
 # - ffmpeg
 # - jq
 # - streamlink
-# - youtube-dlc
+# - yt-dlp
 # - yq (python-yq)
 #
 
@@ -239,12 +239,12 @@ function func_check_deps() {
     fi
   fi
 
-  if command -v youtube-dlc >/dev/null 2>&1 ; then
-    __info "$(__green "Found"): youtube-dlc $(youtube-dlc --version | head -n 1)"
+  if command -v yt-dlp >/dev/null 2>&1 ; then
+    __info "$(__green "Found"): yt-dlp $(yt-dlp --version | head -n 1)"
   else
-    __info "youtube-dlc not found, trying to install..."
+    __info "yt-dlp not found, trying to install..."
     if [ "$OSTYPE" == "linux-gnu" ]; then
-      pip install youtube-dlc
+      pip install yt-dlp
     elif [[ "$OSTYPE" == "darwin"* ]]; then
       brew install ffmpeg
     else
@@ -533,8 +533,8 @@ function func_check_state() {
 
   # First check: use curl to check HTML pages for live state
   # Pros:
-  # - Fast, no additional API requests compared to youtube-dlc
-  # - More ban-proof compared to youtube-dlc
+  # - Fast, no additional API requests compared to yt-dlp
+  # - More ban-proof compared to yt-dlp
   # Cons:
   # - Can get wrong live state due to page caching, network interrupts, etc.
   _gen_metadata_curl "$_url"
@@ -583,7 +583,7 @@ function func_check_state() {
     UPCOMING_TIME=$(echo "$METADATA_CURL" | jq -r '.playabilityStatus.liveStreamability.liveStreamabilityRenderer.offlineSlate.liveStreamOfflineSlateRenderer.scheduledStartTime | select(.!=null)')
     __debug "Scheduled Start Time: $UPCOMING_TIME"
 
-    # Get some metadata first, I will retrieve more later using youtube-dlc
+    # Get some metadata first, I will retrieve more later using yt-dlp
     VIDEO_ID=$(echo "$METADATA_CURL" | jq -r '.videoDetails.videoId')
     FULLTITLE=$(echo "$METADATA_CURL" | jq -r '.videoDetails.title')
     DESCRIPTION=$(echo "$METADATA_CURL" | jq -r '.videoDetails.shortDescription')
@@ -598,7 +598,7 @@ function func_check_state() {
     WEBPAGE_URL="https://www.youtube.com/watch?v=${VIDEO_ID}"
 
     # If I got `isLive: true` in first check, let me assume it's live but I can't trust it so I
-    # will do a secound check using youtube-dlc later with this flag.
+    # will do a secound check using yt-dlp later with this flag.
     if [ "$IS_LIVE" == "true" ]; then
       __info "cURL check seems goes live now, continue checking..."
       CONTENT_STATE="live"
@@ -660,7 +660,7 @@ function func_check_state() {
   #   if ! [ "$DL_TYPE" == "channel" ]; then
   #     # This script now can also handle normal YouTube video, but there's no way to check if the
   #     # given URL is a normal video or an upcoming stream, so we can just break out of the loop
-  #     # and fallback to youtube-dlc to check whelter this URL is downloadable. And make sure it
+  #     # and fallback to yt-dlp to check whelter this URL is downloadable. And make sure it
   #     # only execute once.
   #     ONE_TIME="true"
   #     break
@@ -679,14 +679,14 @@ function func_check_state() {
   #   # exit 1
   # fi
 
-  # Second check: use `youtube-dlc` to check live state
+  # Second check: use `yt-dlp` to check live state
   # NOTE: please avoid adding additional paths in the -o (template) option, it doesn't work well
   # and conflicts with my custom directory setup!
   # I also need redirect stderr to stdout to catch any error during fetching URL
   # Pros:
   # - Accurate live state detection
   # Cons:
-  # - Slow, youtube-dlc will fire API requests to get more info it need to download videos
+  # - Slow, yt-dlp will fire API requests to get more info it need to download videos
   # - Your IP can get banned easily when running in download or notifier mode due to large amount of
   #   API requests.
   if [ "$CONTENT_STATE" != "invalid" ]; then
@@ -699,7 +699,7 @@ function func_check_state() {
       ([ "$CONTENT_STATE" == "offline" ] && [ "$_mode" == "lazy" ])
     then
       if [ "$SKIP_RECHECK" != "true" ]; then
-        __info "Re-checking via youtube-dlc..."
+        __info "Re-checking via yt-dlp..."
 
         local _url=$(func_get_actual_video_url_of_live "$_url")
         __info "Get real video url: $_url"
@@ -707,7 +707,7 @@ function func_check_state() {
         if [ "$_youtube_dl_address_param" ]; then
           __info "using address: ${_youtube_dl_address_param##* }"
         fi
-        METADATA=`youtube-dlc --ignore-config --no-playlist --playlist-items 0 \
+        METADATA=`yt-dlp --ignore-config --no-playlist --playlist-items 0 \
           --skip-download --print-json --referer 'https://www.youtube.com/feed/subscriptions' \
           -o '%(upload_date)s %(title)s (%(id)s).%(ext)s' \
           ${_youtube_dl_address_param} \
@@ -715,7 +715,7 @@ function func_check_state() {
 
         # Check if returns nothing
         if [ ! -z "$METADATA" ]; then
-          __debug "Got valid youtube-dlc metadata"
+          __debug "Got valid yt-dlp metadata"
 
           # Check if it's a valid JSON return
           if [[ "$METADATA" == '{'* ]]; then
@@ -739,7 +739,7 @@ function func_check_state() {
               __debug "Got state: video";
               CONTENT_STATE="video"
             else
-              __info "youtube-dlc does not returns a valid state";
+              __info "yt-dlp does not returns a valid state";
               CONTENT_STATE="invalid"
             fi
           else
@@ -761,7 +761,7 @@ function func_check_state() {
             fi
           fi
         else
-          __info "$(__yellow "Second check failed, not valid youtube-dlc metadata")"
+          __info "$(__yellow "Second check failed, not valid yt-dlp metadata")"
           CONTENT_STATE="invalid"
         fi
 
@@ -1218,8 +1218,8 @@ function func_finalize_vars() {
   rm "$OUTPUT_PATH.tmp"
 
   # Download thumbnail
-  # youtube-dlc has built-in thumbnail download feature via --write-all-thumbnails but it's not
-  # perfect due to the limitation of YouTube API, youtube-dlc will only get `hqdefault.jpg` for
+  # yt-dlp has built-in thumbnail download feature via --write-all-thumbnails but it's not
+  # perfect due to the limitation of YouTube API, yt-dlp will only get `hqdefault.jpg` for
   # finished streams (live streams not affected) because offical API only returns this size even
   # higher resolution is available (`maxresdefault.jpg`). So I created some additional checks here.
   #
@@ -1232,14 +1232,14 @@ function func_finalize_vars() {
   # later changes it to another (thumbnail-B) when stream goes live, `maxresdefault_live.jpg` seems
   # always returns thumbnail-A while `maxresdefault.jpg` can get the correct thumbnail-B.
   #
-  # First download thumbnail provided from youtube-dlc
+  # First download thumbnail provided from yt-dlp
   THUMBNAIL_CALC="$THUMBNAIL"
   curl -s "$THUMBNAIL_CALC" -o "$OUTPUT_PATH.jpg"
 
   # Check thumbnail width
   THUMB_W=`exiv2 "$OUTPUT_PATH.jpg" | awk -F: '/Image size/ {print $2}' | cut -dx -f1 | tr -d ' '`
   if [ "$THUMB_W" -lt "1280" ]; then
-    __info "Thumbnail ($THUMBNAIL_CALC) downloeded via youtube-dlc is too small, try our own method"
+    __info "Thumbnail ($THUMBNAIL_CALC) downloeded via yt-dlp is too small, try our own method"
 
     # Re-assign thumbnail URL
     THUMBNAIL_CALC="https://i.ytimg.com/vi/$VIDEO_ID/maxresdefault.jpg"
@@ -1310,10 +1310,10 @@ function func_download_youtube() {
   elif [ "$CONTENT_STATE" == "video" ]; then
     if [ "$DL_TYPE" == "playlist" ]; then
       # TODO: You have to loop over all the videos to add metadata and thumbnail manually.
-      # Or you can add the following parameters to handle it using youtube-dlc automatically:
+      # Or you can add the following parameters to handle it using yt-dlp automatically:
       #   --embed-thumbnail # requires AtomicParsley
       #   --add-metadata
-      youtube-dlc \
+      yt-dlp \
         --ignore-config \
         --download-archive archive.txt \
         --embed-thumbnail \
@@ -1330,7 +1330,7 @@ function func_download_youtube() {
         -o "${OUTPUT_BASE}/%(upload_date)s %(title)s (%(id)s).%(ext)s" \
         "${WEBPAGE_URL}"
     else
-      youtube-dlc \
+      yt-dlp \
         --ignore-config \
         --external-downloader aria2c \
         --external-downloader-args '-j 16 -s 16 -x 16 -k 1M --retry-wait 10 --max-tries 10' \
@@ -1509,7 +1509,7 @@ Options:
   --interval, -i              Loop interval, unit: second, default: 10
   --create-alias, -a          Create program alias to your current shell profile
   --skip-check, -c            Skip dependency check, default: false
-  --skip-recheck              Skip 2nd stage youtube-dlc live check, default: false
+  --skip-recheck              Skip 2nd stage yt-dlp live check, default: false
   --skip-convert              Skip converting TS file to MP4
   --skip-email                Skip sending email notification
   --skip-slack                Skip sending Slack notification
