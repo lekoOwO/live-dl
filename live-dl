@@ -1077,11 +1077,28 @@ function func_detect_profile() {
   echo "$DETECTED_PROFILE"
 }
 
+function remove_datetime_in_title {
+  local org="$1"
+  local regex="(.+)( [[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2} [[:digit:]]{2}[\:_][[:digit:]]{2})(.+)"
+
+  if [[ "$org" =~ $regex ]]; then
+    echo "${BASH_REMATCH[1]}${BASH_REMATCH[3]}"
+  else
+    echo "Original: $org"
+  fi
+}
+
 function func_process_youtube_metadata() {
   # Extract video info from JSON
   if [ "$SKIP_RECHECK" != "true" ]; then
     VIDEO_ID=$(echo "$METADATA" | jq -r '.id')
-    FULLTITLE=$(echo "$METADATA" | jq -r '.fulltitle')
+    # 2021.3.1
+    # youtube-dl and its fork Changed its live stream title format (embed datetime into the title)
+    # So we now deprecate getting title from youtube-dl unless we got nothing from curl
+    if [[ -z "$FULLTITLE" ]]; then
+      FULLTITLE=$(echo "$METADATA" | jq -r '.fulltitle')
+      FULLTITLE=`remove_datetime_in_title ${FULLTITLE}`
+    fi
     DESCRIPTION=$(echo "$METADATA" | jq -r '.description')
     UPLOAD_DATE=$(echo "$METADATA" | jq -r '.upload_date')
     UPLOADER=$(echo "$METADATA" | jq -r '.uploader')
@@ -1093,14 +1110,18 @@ function func_process_youtube_metadata() {
     LIKE_COUNT=$(echo "$METADATA" | jq -r '.like_count')
     DISLIKE_COUNT=$(echo "$METADATA" | jq -r '.dislike_count')
     AVERAGE_RATING=$(echo "$METADATA" | jq -r '.average_rating')
+    
+    # 2021.3.1
+    # youtube-dl and its fork Changed its live stream title format (embed datetime into the title)
+    # So we now deprecate getting title from youtube-dl unless we got nothing from curl
 
     # Filename (without path)
-    FILENAME=$(echo "$METADATA" | jq -r '._filename' | sed -e 's/.mp4//' | sed -e 's/.webm//')
-  else
-    FILENAME="$UPLOAD_DATE $FULLTITLE $VIDEO_ID"
-    # Escape
-    FILENAME="${FILENAME////∕}"
+    # FILENAME=$(echo "$METADATA" | jq -r '._filename' | sed -e 's/.mp4//' | sed -e 's/.webm//')
   fi
+
+  FILENAME="$UPLOAD_DATE $FULLTITLE ($VIDEO_ID)"
+  # Escape
+  FILENAME="${FILENAME////∕}"
 }
 
 function func_process_channel_mapping() {
