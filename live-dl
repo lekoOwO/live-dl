@@ -1122,7 +1122,16 @@ function func_process_youtube_metadata() {
 
   FILENAME="$UPLOAD_DATE $FULLTITLE ($VIDEO_ID)"
   # Escape
-  FILENAME="${FILENAME////∕}"
+  # https://support.microsoft.com/zh-tw/office/onedrive-%e5%92%8c-sharepoint-%e4%b8%ad%e7%84%a1%e6%95%88%e7%9a%84%e6%aa%94%e6%a1%88%e5%90%8d%e7%a8%b1%e5%92%8c%e6%aa%94%e6%a1%88%e9%a1%9e%e5%9e%8b-64883a5d-228e-48f5-b3d2-eb39e07630fa?ui=zh-tw&rs=zh-tw&ad=tw#invalidcharacters
+  FILENAME="${FILENAME//\"/_}"
+  FILENAME="${FILENAME//\*/_}"
+  FILENAME="${FILENAME//\:/_}"
+  FILENAME="${FILENAME//\</_}"
+  FILENAME="${FILENAME//\>/_}"
+  FILENAME="${FILENAME//\?/_}"
+  FILENAME="${FILENAME//\//_}"
+  FILENAME="${FILENAME//\//_}"
+  FILENAME="${FILENAME//\|/_}"
 }
 
 function func_process_channel_mapping() {
