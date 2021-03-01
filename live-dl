@@ -593,6 +593,7 @@ function func_check_state() {
     AVERAGE_RATING=$(echo "$METADATA_CURL" | jq -r '.videoDetails.averageRating')
     VIEW_COUNT=$(echo "$METADATA_CURL" | jq -r '.videoDetails.viewCount')
     UPLOAD_DATE=$(echo "$METADATA_CURL" | jq -r '.microformat.playerMicroformatRenderer.uploadDate')
+    UPLOAD_DATE=${UPLOAD_DATE//-/}
     UPLOADER=$(echo "$METADATA_CURL" | jq -r '.microformat.playerMicroformatRenderer.ownerChannelName')
     CHANNEL_URL=$(echo "$METADATA_CURL" | jq -r '.microformat.playerMicroformatRenderer.ownerProfileUrl')
     WEBPAGE_URL="https://www.youtube.com/watch?v=${VIDEO_ID}"
