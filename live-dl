@@ -1084,7 +1084,7 @@ function remove_datetime_in_title {
   if [[ "$org" =~ $regex ]]; then
     echo "${BASH_REMATCH[1]}${BASH_REMATCH[3]}"
   else
-    echo "Original: $org"
+    echo "$org"
   fi
 }
 
