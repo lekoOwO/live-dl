@@ -1101,7 +1101,6 @@ function escape_filename {
   filename="${filename//\>/_}"
   filename="${filename//\?/_}"
   filename="${filename//\//_}"
-  filename="${filename//\//_}"
   filename="${filename//\|/_}"
   echo "${filename}"
 }
