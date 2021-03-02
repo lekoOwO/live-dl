@@ -1133,7 +1133,8 @@ function func_process_youtube_metadata() {
     # FILENAME=$(echo "$METADATA" | jq -r '._filename' | sed -e 's/.mp4//' | sed -e 's/.webm//')
   fi
 
-  FILENAME=`escape_filename "$UPLOAD_DATE $FULLTITLE ($VIDEO_ID)"`
+  FULLTITLE=`escape_filename "${FULLTITLE}"`
+  FILENAME="$UPLOAD_DATE $FULLTITLE ($VIDEO_ID)"
 }
 
 function func_process_channel_mapping() {
