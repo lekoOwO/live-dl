@@ -185,6 +185,12 @@ while [ $# -gt 0 ]; do
       shift
       shift
       ;;
+    --ytarchive-cookie)
+      PARAM_YTARCHIVE=true
+      PARAM_YTARCHIVE_COOKIE="$2"
+      shift
+      shift
+      ;;
     --address-pool)
       PARAM_ADDRESS_POOL=true
       PARAM_ADDRESS_POOL_FILE="$2"
@@ -1317,10 +1323,16 @@ function func_download_youtube() {
       # % Has a special meaning in python
       local tmp_output_path="${OUTPUT_PATH//%/%%}"
 
+      if [[ "$YTARCHIVE_COOKIE" != "/dev/null" ]] && [[ -f "$YTARCHIVE_COOKIE" ]]; then
+        local ytarchive_cookie_param="-c '$YTARCHIVE_COOKIE'"
+      else
+        local ytarchive_cookie_param=""
+      fi
       mkdir -p /tmp/ytarchive
       (cd /tmp/ytarchive && "$YTARCHIVE_EXEC" \
         --no-wait \
         --vp9 \
+        ${ytarchive_cookie_param} \
         -o "${tmp_output_path}" \
         "${WEBPAGE_URL}" best) >> "$OUTPUT_PATH.log" 2>&1
     else
@@ -1550,6 +1562,7 @@ Options:
   --callback [EXECUTABLE]     Run the callback after videos downloaded
   --onlive [EXECUTABLE]       Run the executable before livestream starts downloading
   --ytarchive [EXECUTABLE]    Downloads livestream using ytarchive instead of streamlink
+  --ytarchive-cookie [FILE]   Use cookie file for ytarchive download
   --address-pool [list.txt]   Use multiple addresses for curl to prevent 429 Error          
   --once, -1                  Run only once, default: false
   --debug                     Show debug logs, default: false
@@ -1603,6 +1616,7 @@ CONFIG_TELEGRAM_CHANNEL=`echo $CONFIG_RAW | jq -r '.config.telegram.channel | se
 CONFIG_CALLBACK_EXEC=`echo $CONFIG_RAW | jq -r '.config.callback.executable | select(.!=null)'`
 CONFIG_ONLIVE_EXEC=`echo $CONFIG_RAW | jq -r '.config.onlive.executable | select(.!=null)'`
 CONFIG_YTARCHIVE_EXEC=`echo $CONFIG_RAW | jq -r '.config.ytarchive.executable | select(.!=null)'`
+CONFIG_YTARCHIVE_COOKIE=`echo $CONFIG_RAW | jq -r '.config.ytarchive.cookie | select(.!=null)'`
 CONFIG_ADDRESS_POOL_FILE=`echo $CONFIG_RAW | jq -r '.config.address_pool_file | select(.!=null)'`
 
 MODE="${PARAM_MODE:-$CONFIG_MODE}"
@@ -1620,6 +1634,7 @@ ONLIVE="${PARAM_ONLIVE:-$CONFIG_ONLIVE}"
 ONLIVE_EXEC="${PARAM_ONLIVE_EXEC:-$CONFIG_ONLIVE_EXEC}"
 YTARCHIVE="${PARAM_YTARCHIVE:-$CONFIG_YTARCHIVE}"
 YTARCHIVE_EXEC="${PARAM_YTARCHIVE_EXEC:-$CONFIG_YTARCHIVE_EXEC}"
+YTARCHIVE_COOKIE="${PARAM_YTARCHIVE_COOKIE:-$CONFIG_YTARCHIVE_COOKIE}"
 ADDRESS_POOL="${PARAM_ADDRESS_POOL:-$CONFIG_ADDRESS_POOL}"
 ADDRESS_POOL_FILE="${PARAM_ADDRESS_POOL_FILE:-$CONFIG_ADDRESS_POOL_FILE}"
 ONE_TIME="${PARAM_ONE_TIME:-$CONFIG_ONE_TIME}"

@@ -56,6 +56,7 @@ config:
     executable: /dev/null
   ytarchive:
     executable: /dev/null
+    cookie: /dev/null
   address_pool_file: /dev/null
 
 map:
