@@ -1324,7 +1324,7 @@ function func_download_youtube() {
       local tmp_output_path="${OUTPUT_PATH//%/%%}"
 
       if [[ "$YTARCHIVE_COOKIE" != "/dev/null" ]] && [[ -f "$YTARCHIVE_COOKIE" ]]; then
-        local ytarchive_cookie_param="-c '$YTARCHIVE_COOKIE'"
+        local ytarchive_cookie_param="-c \"$YTARCHIVE_COOKIE\"""
       else
         local ytarchive_cookie_param=""
       fi
