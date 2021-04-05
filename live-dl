@@ -197,6 +197,12 @@ while [ $# -gt 0 ]; do
       shift
       shift
       ;;
+    --address-bin)
+      PARAM_ADDRESS_BIN=true
+      PARAM_ADDRESS_BIN_FILE="$2"
+      shift
+      shift
+      ;;
     -1|--once)
       PARAM_ONE_TIME=true
       shift
@@ -441,9 +447,20 @@ function func_create_url() {
   fi
 }
 
-function func_gen_curl_address_param() {
-  if [[ "$ADDRESS_POOL" == "true" && "$ADDRESS_POOL_FILE" != "/dev/null" ]]; then
+function func_get_ip_from_pool(){
+  if [[ "$ADDRESS_BIN" == "true" && "$ADDRESS_BIN_FILE" != "/dev/null" ]]; then
+    echo $(eval "$ADDRESS_BIN_FILE")
+  elif [[ "$ADDRESS_POOL" == "true" && "$ADDRESS_POOL_FILE" != "/dev/null" ]]; then
     local ip=$(shuf -n 1 "${ADDRESS_POOL_FILE}")
+    echo "${ip}"
+  else
+    echo ""
+  fi
+}
+
+function func_gen_curl_address_param() {
+  local ip=$(func_get_ip_from_pool)
+  if [[ ! -z $ip ]]; then
     echo "--interface ${ip}"
   else
     echo ""
@@ -451,8 +468,8 @@ function func_gen_curl_address_param() {
 }
 
 function func_gen_youtube_dl_address_param() {
-  if [[ "$ADDRESS_POOL" == "true" && "$ADDRESS_POOL_FILE" != "/dev/null" ]]; then
-    local ip=$(shuf -n 1 "${ADDRESS_POOL_FILE}")
+  local ip=$(func_get_ip_from_pool)
+  if [[ ! -z $ip ]]; then
     echo "--source-address ${ip}"
   else
     echo ""
@@ -460,16 +477,9 @@ function func_gen_youtube_dl_address_param() {
 }
 
 function func_gen_streamlink_address_param() {
-  if [[ "$ADDRESS_POOL" == "true" && "$ADDRESS_POOL_FILE" != "/dev/null" ]]; then
-    # Feb. 11, 2021
-    # Changed my machine, toggling it back.
-    # Feb. 8, 2021
-    # IPv6 works not great on my machine, so let's fallback to IPv4 on streamlink.
-    
-    local ip=$(shuf -n 1 "${ADDRESS_POOL_FILE}")
+  local ip=$(func_get_ip_from_pool)
+  if [[ ! -z $ip ]]; then
     echo "--interface ${ip}"
-    
-    # echo "-4"
   else
     echo ""
   fi
@@ -1563,7 +1573,8 @@ Options:
   --onlive [EXECUTABLE]       Run the executable before livestream starts downloading
   --ytarchive [EXECUTABLE]    Downloads livestream using ytarchive instead of streamlink
   --ytarchive-cookie [FILE]   Use cookie file for ytarchive download
-  --address-pool [list.txt]   Use multiple addresses for curl to prevent 429 Error          
+  --address-pool [list.txt]   Use multiple addresses for curl to prevent 429 Error     
+  --address-bin [EXECUTABLE]  Similar to address pool. but get an address from exec instead of pool file.
   --once, -1                  Run only once, default: false
   --debug                     Show debug logs, default: false
   --image-proxy               Enable image proxy for China users, default: false"
@@ -1600,6 +1611,7 @@ CONFIG_CALLBACK=`echo $CONFIG_RAW | jq -r '.config.run_callback | select(.!=null
 CONFIG_ONLIVE=`echo $CONFIG_RAW | jq -r '.config.run_onlive | select(.!=null)'`
 CONFIG_YTARCHIVE=`echo $CONFIG_RAW | jq -r '.config.use_ytarchive | select(.!=null)'`
 CONFIG_ADDRESS_POOL=`echo $CONFIG_RAW | jq -r '.config.address_pool | select(.!=null)'`
+CONFIG_ADDRESS_BIN=`echo $CONFIG_RAW | jq -r '.config.address_bin | select(.!=null)'`
 CONFIG_ONE_TIME=`echo $CONFIG_RAW | jq -r '.config.one_time | select(.!=null)'`
 CONFIG_IMAGE_PROXY=`echo $CONFIG_RAW | jq -r '.config.image_proxy | select(.!=null)'`
 CONFIG_EMAIL_PROVIDER=`echo $CONFIG_RAW | jq -r '.config.email_provider | select(.!=null)'`
@@ -1618,6 +1630,7 @@ CONFIG_ONLIVE_EXEC=`echo $CONFIG_RAW | jq -r '.config.onlive.executable | select
 CONFIG_YTARCHIVE_EXEC=`echo $CONFIG_RAW | jq -r '.config.ytarchive.executable | select(.!=null)'`
 CONFIG_YTARCHIVE_COOKIE=`echo $CONFIG_RAW | jq -r '.config.ytarchive.cookie | select(.!=null)'`
 CONFIG_ADDRESS_POOL_FILE=`echo $CONFIG_RAW | jq -r '.config.address_pool_file | select(.!=null)'`
+CONFIG_ADDRESS_BIN_FILE=`echo $CONFIG_RAW | jq -r '.config.address_bin_file | select(.!=null)'`
 
 MODE="${PARAM_MODE:-$CONFIG_MODE}"
 BASE_DIR="${_PARAM_BASE_DIR:-$CONFIG_BASE_DIR}"
@@ -1636,7 +1649,9 @@ YTARCHIVE="${PARAM_YTARCHIVE:-$CONFIG_YTARCHIVE}"
 YTARCHIVE_EXEC="${PARAM_YTARCHIVE_EXEC:-$CONFIG_YTARCHIVE_EXEC}"
 YTARCHIVE_COOKIE="${PARAM_YTARCHIVE_COOKIE:-$CONFIG_YTARCHIVE_COOKIE}"
 ADDRESS_POOL="${PARAM_ADDRESS_POOL:-$CONFIG_ADDRESS_POOL}"
+ADDRESS_BIN="${PARAM_ADDRESS_BIN:-$CONFIG_ADDRESS_BIN}"
 ADDRESS_POOL_FILE="${PARAM_ADDRESS_POOL_FILE:-$CONFIG_ADDRESS_POOL_FILE}"
+ADDRESS_BIN_FILE="${PARAM_ADDRESS_BIN_FILE:-$CONFIG_ADDRESS_BIN_FILE}"
 ONE_TIME="${PARAM_ONE_TIME:-$CONFIG_ONE_TIME}"
 IMAGE_PROXY="${PARAM_IMAGE_PROXY:-$CONFIG_IMAGE_PROXY}"
 URL_INPUT="$1"
@@ -1660,6 +1675,7 @@ __info "Callback                       : ${CALLBACK}"
 __info "Onlive                         : ${ONLIVE}"
 __info "ytarchive                      : ${YTARCHIVE}"
 __info "Address Pool                   : ${ADDRESS_POOL}"
+__info "Address Bin                    : ${ADDRESS_BIN}"
 __info "Email provider                 : ${CONFIG_EMAIL_PROVIDER}"
 __info "One-time execution             : ${ONE_TIME}"
 

@@ -24,6 +24,7 @@ config:
   run_callback: false
   run_onlive: false
   address_pool: false
+  address_bin: false
   one_time: false
   image_proxy: false
   use_ytarchive: true
@@ -58,6 +59,7 @@ config:
     executable: /dev/null
     cookie: /dev/null
   address_pool_file: /dev/null
+  address_bin_file: /dev/null
 
 map:
   - name: Sparanoid
