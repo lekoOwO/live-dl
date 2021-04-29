@@ -1345,6 +1345,7 @@ function func_download_youtube() {
         ${ytarchive_cookie_param} \
         -o "${tmp_output_path}" \
         "${WEBPAGE_URL}" best) >> "$OUTPUT_PATH.log" 2>&1
+      mv "${tmp_output_path}.mp4" "${OUTPUT_PATH}${EXTENSION}" >> "$OUTPUT_PATH.log" 2>&1
     else
       local _streamlink_address_param=$(func_gen_streamlink_address_param)
       if [ "$_streamlink_address_param" ]; then
